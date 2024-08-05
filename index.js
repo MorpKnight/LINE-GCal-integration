@@ -1,4 +1,3 @@
-// index.js
 const { google } = require('googleapis');
 const { format } = require('date-fns');
 const cron = require('node-cron');
@@ -12,6 +11,18 @@ const hour = process.env.HOUR || 6;
 
 let notifiedTasks = new Set();
 
+// Function to log messages with timestamp
+function log(message) {
+    const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+    console.log(`[${timestamp}] ${message}`);
+}
+
+// Function to log errors with timestamp
+function error(message) {
+    const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+    console.error(`[${timestamp}] ${message}`);
+}
+
 // Load the state from the file or create it if it doesn't exist
 async function loadState() {
     try {
@@ -24,7 +35,7 @@ async function loadState() {
             notifiedTasks = new Set();
             await fs.writeFile(STATE_FILE_PATH, JSON.stringify([...notifiedTasks]), 'utf8');
         } else {
-            console.error('Error loading state:', error);
+            error('Error loading state: ' + error.message);
         }
     }
 }
@@ -34,7 +45,7 @@ async function saveState() {
     try {
         await fs.writeFile(STATE_FILE_PATH, JSON.stringify([...notifiedTasks]), 'utf8');
     } catch (error) {
-        console.error('Error saving state:', error);
+        error('Error saving state: ' + error.message);
     }
 }
 
@@ -52,8 +63,8 @@ async function main(auth) {
         if (!notifiedTasks.has(task.id)) {
             const message = `\nNew task: ${task.title}`;
             lineNotify.notify({ message })
-                .then(() => console.log('Notify new task success'))
-                .catch(console.error);
+                .then(() => log('Notify new task success'))
+                .catch(err => error(err.message));
             notifiedTasks.add(task.id);
             saveState(); // Save state after adding a new task
         }
@@ -61,7 +72,7 @@ async function main(auth) {
 
     function notifyTasksOverview(tasks) {
         if (tasks.length === 0) {
-            console.log('No tasks to notify.');
+            log('No tasks to notify.');
             return;
         }
 
@@ -100,32 +111,36 @@ async function main(auth) {
 
         const message = messageParts.join('\n');
         lineNotify.notify({ message })
-            .then(() => console.log('Notify tasks overview success'))
-            .catch(console.error);
+            .then(() => log('Notify tasks overview success'))
+            .catch(err => error(err.message));
     }
 
     async function checkTasks() {
-        const res = await service.tasks.list({
-            tasklist: '@default',
-            showCompleted: false
-        });
-        const tasks = res.data.items || [];
+        try {
+            const res = await service.tasks.list({
+                tasklist: '@default',
+                showCompleted: false
+            });
+            const tasks = res.data.items || [];
+            
+            const now = new Date();
+            const sortedTasks = tasks.sort((a, b) => {
+                const dueA = new Date(a.due);
+                const dueB = new Date(b.due);
+                return dueA - dueB;
+            });
+            
+            const overdueTasks = sortedTasks.filter(task => task.due && new Date(task.due) < now);
+            const upcomingTasks = sortedTasks.filter(task => task.due && new Date(task.due) >= now);
+            const noDueDateTasks = sortedTasks.filter(task => !task.due);
         
-        const now = new Date();
-        const sortedTasks = tasks.sort((a, b) => {
-            const dueA = new Date(a.due);
-            const dueB = new Date(b.due);
-            return dueA - dueB;
-        });
+            const finalTaskList = [...overdueTasks, ...upcomingTasks, ...noDueDateTasks];
         
-        const overdueTasks = sortedTasks.filter(task => task.due && new Date(task.due) < now);
-        const upcomingTasks = sortedTasks.filter(task => task.due && new Date(task.due) >= now);
-        const noDueDateTasks = sortedTasks.filter(task => !task.due);
-    
-        const finalTaskList = [...overdueTasks, ...upcomingTasks, ...noDueDateTasks];
-    
-        upcomingTasks.forEach(notifyNewTask);
-        notifyTasksOverview(finalTaskList);
+            upcomingTasks.forEach(notifyNewTask);
+            notifyTasksOverview(finalTaskList);
+        } catch (err) {
+            error('Error checking tasks: ' + err.message);
+        }
     }
 
     // Schedule task checking every day at specified hour for task overview and overdue tasks
@@ -149,13 +164,13 @@ async function main(auth) {
                 due: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() // due in 24 hours
             }
         }).then(res => {
-            console.log(res.data);
+            log('Test task created: ' + JSON.stringify(res.data));
             notifyNewTask(res.data);
-        }).catch(console.error);
+        }).catch(err => error(err.message));
     }
 
     // Uncomment to create a test task
     // createTestTask();
 }
 
-authorize().then(main).catch(console.error);
+authorize().then(main).catch(err => error('Error authorizing: ' + err.message));
