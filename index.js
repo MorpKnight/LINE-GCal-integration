@@ -8,6 +8,7 @@ const { authorize } = require('./src/auth');
 
 const STATE_FILE_PATH = 'notifiedTasks.json';
 const hour = process.env.HOUR || 6;
+const minutes = process.env.MINUTES || 0;
 
 let notifiedTasks = new Set();
 
@@ -143,16 +144,10 @@ async function main(auth) {
         }
     }
 
-    // Schedule task checking every day at specified hour for task overview and overdue tasks
-    // Schedule task checking every day at 6 AM for task overview and overdue tasks
-    // cron.schedule('*/10 * * * * *', () => {
-    //     checkTasks();
-    // }, { timezone: 'Asia/Jakarta' });
-
-    // Schedule task checking every 10 minutes for new tasks
-    cron.schedule(`0 ${hour} * * *`, () => {
+    // Schedule task checking every day at specified hour and minutes for task overview and overdue tasks
+    cron.schedule(`${minutes} ${hour} * * *`, () => {
         checkTasks();
-    }, {timezone: 'Asia/Jakarta'});
+    }, { timezone: 'Asia/Jakarta' });
 
     // Example: Create a task to test the notifications
     function createTestTask() {
@@ -174,6 +169,9 @@ async function main(auth) {
 }
 
 console.log('System is running...');
-const message = `Auto Task Reminder will notify you every day at ${hour}:00`;
+const formattedHour = String(hour).padStart(2, '0');
+const formattedMinute = String(minutes).padStart(2, '0');
+
+const message = `Auto Task Reminder will notify you every day at ${formattedHour}:${formattedMinute}`;
 console.log(message);
 authorize().then(main).catch(err => error('Error authorizing: ' + err.message));
