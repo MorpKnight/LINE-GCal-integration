@@ -173,4 +173,5 @@ async function main(auth) {
     // createTestTask();
 }
 
+console.log('System is running...');
 authorize().then(main).catch(err => error('Error authorizing: ' + err.message));
