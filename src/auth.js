@@ -7,7 +7,7 @@ const { auth } = require('googleapis/build/src/apis/abusiveexperiencereport');
 
 const SCOPES = ['https://www.googleapis.com/auth/tasks.readonly', 'https://www.googleapis.com/auth/tasks'];
 const TOKEN_PATH = path.join(process.cwd(), 'token.json');
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
+// const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
 
 /**
@@ -17,7 +17,8 @@ const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
  */
 async function loadSavedCredentialsIfExist() {
     try {
-        const content = await fs.readFile(TOKEN_PATH);
+        // const content = await fs.readFile(TOKEN_PATH);
+        const content = process.env.TOKEN
         const credentials = JSON.parse(content);
         return google.auth.fromJSON(credentials);
     } catch (err) {
@@ -71,10 +72,10 @@ async function authorize() {
     if (client) {
         return client;
     }
-    client = await authenticate({
-        scopes: SCOPES,
-        keyfilePath: CREDENTIALS_PATH,
-    });
+    // client = await authenticate({
+    //     scopes: SCOPES,
+    //     keyfilePath: CREDENTIALS_PATH,
+    // });
     if (client.credentials) {
         await saveCredentials(client);
     }
