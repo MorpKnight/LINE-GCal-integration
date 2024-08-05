@@ -1,0 +1,29 @@
+{
+  "name": "playground-task-linenotify",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google-cloud/local-auth": "^2.1.0",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "googleapis": "^105.0.0",
+    "line-notify-nodejs": "^1.0.1",
+    "node-cron": "^3.0.3",
+    "nodemon": "^3.1.4"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      ".git",
+      "node_modules",
+      "notifiedTasks.json"
+    ]
+  }
+}
