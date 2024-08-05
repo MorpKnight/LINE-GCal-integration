@@ -130,14 +130,14 @@ async function main(auth) {
 
     // Schedule task checking every day at specified hour for task overview and overdue tasks
     // Schedule task checking every day at 6 AM for task overview and overdue tasks
-    cron.schedule('*/10 * * * * *', () => {
-        checkTasks();
-    });
+    // cron.schedule('*/10 * * * * *', () => {
+    //     checkTasks();
+    // }, { timezone: 'Asia/Jakarta' });
 
     // Schedule task checking every 10 minutes for new tasks
-    // cron.schedule(`0 ${hour} * * *`, () => {
-    //     checkTasks();
-    // });
+    cron.schedule(`0 ${hour} * * *`, () => {
+        checkTasks();
+    }, {timezone: 'Asia/Jakarta'});
 
     // Example: Create a task to test the notifications
     function createTestTask() {
