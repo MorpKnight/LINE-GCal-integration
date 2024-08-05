@@ -174,7 +174,6 @@ async function main(auth) {
 }
 
 console.log('System is running...');
-
-// log configuration
 const message = `Auto Task Reminder will notify you every day at ${hour}:00`;
+console.log(message);
 authorize().then(main).catch(err => error('Error authorizing: ' + err.message));
